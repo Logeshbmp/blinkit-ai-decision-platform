@@ -57,10 +57,42 @@ if page == "Analytics Dashboard":
 
     @st.cache_data
     def load_analytics():
-        df = pd.read_sql("SELECT * FROM master_analytics_view", engine)
-        df["report_date"] = pd.to_datetime(df["report_date"])
+        import pandas as pd
+    
+        marketing = pd.read_csv("data_set/blinkit_marketing_performance.csv")
+        orders = pd.read_csv("data_set/blinkit_orders.csv")
+        order_items = pd.read_csv("data_set/blinkit_order_items.csv")
+        products = pd.read_csv("data_set/blinkit_products.csv")
+        feedback = pd.read_csv("data_set/blinkit_customer_feedback.csv")
+    
+        # Convert dates
+        marketing["date"] = pd.to_datetime(marketing["date"])
+        orders["order_date"] = pd.to_datetime(orders["order_date"])
+        feedback["feedback_date"] = pd.to_datetime(feedback["feedback_date"])
+    
+        # Marketing aggregation
+        daily_marketing = marketing.groupby(marketing["date"].dt.date).agg({
+            "spend": "sum",
+            "impressions": "sum",
+            "clicks": "sum"
+        }).reset_index().rename(columns={"date": "report_date"})
+    
+        # Orders aggregation
+        daily_orders = orders.groupby(orders["order_date"].dt.date).agg({
+            "order_total": "sum",
+            "order_id": "count"
+        }).reset_index().rename(columns={
+            "order_date": "report_date",
+            "order_total": "revenue",
+            "order_id": "order_count"
+        })
+    
+        # Merge
+        df = pd.merge(daily_orders, daily_marketing, on="report_date", how="outer")
+    
+        df.fillna(0, inplace=True)
+    
         return df
-
     df = load_analytics()
 
     # ---------- Date Filter ----------
