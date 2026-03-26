@@ -8,6 +8,8 @@ joblib
 faiss-cpu
 langchain
 langchain-community
+langchain-groq
+groq
 sentence-transformers
 openai
 numpy
